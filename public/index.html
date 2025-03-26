@@ -1,0 +1,115 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Drawing Game</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    canvas { border: 1px solid black; }
+    #gameArea { display: none; }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <button onclick="createGame()">Host Game</button>
+    <div>
+      <input id="gameId" placeholder="Game ID">
+      <button onclick="joinGame()">Join Game</button>
+    </div>
+  </div>
+
+  <div id="gameArea">
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <div id="guessArea">
+      <input id="guess" placeholder="Enter your guess">
+      <button onclick="sendGuess()">Guess</button>
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    let isHost = false;
+    let currentGameId = null;
+    let isDrawing = false;
+
+    socket.on('gameCreated', (gameId) => {
+      currentGameId = gameId;
+      isHost = true;
+      document.getElementById('menu').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+      alert(`Game created! ID: ${gameId}`);
+    });
+
+    socket.on('gameJoined', (gameId) => {
+      currentGameId = gameId;
+      document.getElementById('menu').style.display = 'none';
+      document.getElementById('gameArea').style.display = 'block';
+    });
+
+    socket.on('draw', (line) => {
+      drawLine(line.start, line.end);
+    });
+
+    socket.on('newGuess', (data) => {
+      console.log(`Player ${data.player} guessed: ${data.guess}`);
+    });
+
+    function createGame() {
+      socket.emit('createGame');
+    }
+
+    function joinGame() {
+      const gameId = document.getElementById('gameId').value;
+      socket.emit('joinGame', gameId);
+    }
+
+    function sendGuess() {
+      const guess = document.getElementById('guess').value;
+      socket.emit('guess', { gameId: currentGameId, guess });
+      document.getElementById('guess').value = '';
+    }
+
+    let lastPos = null;
+
+    canvas.addEventListener('mousedown', (e) => {
+      if (isHost) {
+        isDrawing = true;
+        lastPos = getMousePos(canvas, e);
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (isHost && isDrawing) {
+        const currentPos = getMousePos(canvas, e);
+        drawLine(lastPos, currentPos);
+        socket.emit('draw', {
+          gameId: currentGameId,
+          line: { start: lastPos, end: currentPos }
+        });
+        lastPos = currentPos;
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+      isDrawing = false;
+    });
+
+    function getMousePos(canvas, evt) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+      };
+    }
+
+    function drawLine(start, end) {
+      ctx.beginPath();
+      ctx.moveTo(start.x, start.y);
+      ctx.lineTo(end.x, end.y);
+      ctx.stroke();
+    }
+  </script>
+</body>
+</html>
