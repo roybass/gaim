@@ -11,7 +11,7 @@ let games = {};
 
 io.on('connection', (socket) => {
   socket.on('createGame', () => {
-    const gameId = Math.random().toString(36).substring(7);
+    const gameId = Math.floor(1000 + Math.random() * 9000).toString();
     games[gameId] = { host: socket.id, players: [], drawing: [] };
     socket.join(gameId);
     socket.emit('gameCreated', gameId);
