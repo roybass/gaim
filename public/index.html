@@ -20,9 +20,12 @@
 
   <div id="gameArea">
     <canvas id="canvas" width="800" height="600"></canvas>
-    <div id="guessArea">
-      <input id="guess" placeholder="Enter your guess">
-      <button onclick="sendGuess()">Guess</button>
+    <div id="controls">
+      <button onclick="clearCanvas()" id="clearBtn">Clear Canvas</button>
+      <div id="guessArea">
+        <input id="guess" placeholder="Enter your guess">
+        <button onclick="sendGuess()">Guess</button>
+      </div>
     </div>
   </div>
 
@@ -55,6 +58,17 @@
     socket.on('newGuess', (data) => {
       console.log(`Player ${data.player} guessed: ${data.guess}`);
     });
+
+    socket.on('clearCanvas', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    function clearCanvas() {
+      if (isHost) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        socket.emit('clearCanvas', { gameId: currentGameId });
+      }
+    }
 
     function createGame() {
       socket.emit('createGame');

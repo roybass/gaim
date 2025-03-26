@@ -39,6 +39,14 @@ io.on('connection', (socket) => {
       io.to(gameId).emit('newGuess', { player: socket.id, guess });
     }
   });
+
+  socket.on('clearCanvas', (data) => {
+    const { gameId } = data;
+    if (games[gameId] && games[gameId].host === socket.id) {
+      games[gameId].drawing = [];
+      socket.to(gameId).emit('clearCanvas');
+    }
+  });
 });
 
 http.listen(3000, '0.0.0.0', () => {
