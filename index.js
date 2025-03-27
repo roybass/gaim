@@ -1,4 +1,3 @@
-
 const express = require('express');
 const app = express();
 const http = require('http').Server(app);
@@ -9,10 +8,17 @@ app.use(express.static('public'));
 
 let games = {};
 
+const createNewGame = (hostId) => ({
+  host: hostId,
+  players: [],
+  drawing: [],
+  guesses: []
+});
+
 io.on('connection', (socket) => {
   socket.on('createGame', () => {
     const gameId = Math.floor(1000 + Math.random() * 9000).toString();
-    games[gameId] = { host: socket.id, players: [], drawing: [] };
+    games[gameId] = createNewGame(socket.id);
     socket.join(gameId);
     socket.emit('gameCreated', gameId);
   });
@@ -37,7 +43,21 @@ io.on('connection', (socket) => {
   socket.on('guess', (data) => {
     const { gameId, guess } = data;
     if (games[gameId]) {
-      io.to(gameId).emit('newGuess', { player: socket.id, guess });
+      const guessObj = { id: Date.now(), player: socket.id, guess, correct: false };
+      games[gameId].guesses.push(guessObj);
+      io.to(gameId).emit('newGuess', guessObj);
+    }
+  });
+
+  socket.on('validateGuess', (data) => {
+    const { gameId, guessId } = data;
+    const game = games[gameId];
+    if (game && game.host === socket.id) {
+      const guess = game.guesses.find(g => g.id === guessId);
+      if (guess) {
+        guess.correct = true;
+        io.to(gameId).emit('guessValidated', guess);
+      }
     }
   });
 

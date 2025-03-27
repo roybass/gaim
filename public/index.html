@@ -29,8 +29,20 @@
         <input id="guess" placeholder="Enter your guess">
         <button onclick="sendGuess()">Guess</button>
       </div>
+      <div id="guessList" style="margin-top: 20px; display: none;"></div>
     </div>
   </div>
+
+  <style>
+    .guess-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px;
+      margin: 5px 0;
+      border: 1px solid #ccc;
+    }
+  </style>
 
   <script>
     const socket = io();
@@ -45,8 +57,13 @@
       isHost = true;
       document.getElementById('menu').style.display = 'none';
       document.getElementById('gameArea').style.display = 'block';
+      document.getElementById('guessList').style.display = 'block';
       alert(`Game created! ID: ${gameId}`);
     });
+
+    function validateGuess(guessId) {
+      socket.emit('validateGuess', { gameId: currentGameId, guessId });
+    }
 
     socket.on('gameJoined', (gameId) => {
       currentGameId = gameId;
@@ -63,7 +80,30 @@
     });
 
     socket.on('newGuess', (data) => {
-      console.log(`Player ${data.player} guessed: ${data.guess}`);
+      if (isHost) {
+        const guessList = document.getElementById('guessList');
+        const guessItem = document.createElement('div');
+        guessItem.id = `guess-${data.id}`;
+        guessItem.className = 'guess-item';
+        guessItem.innerHTML = `
+          <span>Player ${data.player}: ${data.guess}</span>
+          <button onclick="validateGuess(${data.id})" ${data.correct ? 'disabled' : ''}>✓</button>
+        `;
+        guessList.appendChild(guessItem);
+      }
+    });
+
+    socket.on('guessValidated', (data) => {
+      if (data.player === socket.id) {
+        alert('Your guess was correct!');
+      }
+      if (isHost) {
+        const guessItem = document.getElementById(`guess-${data.id}`);
+        if (guessItem) {
+          const button = guessItem.querySelector('button');
+          button.disabled = true;
+        }
+      }
     });
 
     socket.on('clearCanvas', () => {
