@@ -19,7 +19,10 @@
   </div>
 
   <div id="gameArea">
-    <canvas id="canvas" width="800" height="600"></canvas>
+    <div style="display: flex; align-items: center; gap: 10px">
+      <canvas id="canvas" width="800" height="600"></canvas>
+      <div id="drawingsCount">Drawings: 0</div>
+    </div>
     <div id="controls">
       <button onclick="clearCanvas()" id="clearBtn">Clear Canvas</button>
       <div id="guessArea">
@@ -53,6 +56,8 @@
 
     socket.on('draw', (line) => {
       drawLine(line.start, line.end);
+      const count = parseInt(document.getElementById('drawingsCount').textContent.split(': ')[1]) + 1;
+      document.getElementById('drawingsCount').textContent = `Drawings: ${count}`;
     });
 
     socket.on('newGuess', (data) => {
@@ -61,6 +66,7 @@
 
     socket.on('clearCanvas', () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      document.getElementById('drawingsCount').textContent = 'Drawings: 0';
     });
 
     function clearCanvas() {
