@@ -56,7 +56,9 @@
 
     socket.on('draw', (line) => {
       drawLine(line.start, line.end);
-      const count = parseInt(document.getElementById('drawingsCount').textContent.split(': ')[1]) + 1;
+    });
+
+    socket.on('updateDrawCount', (count) => {
       document.getElementById('drawingsCount').textContent = `Drawings: ${count}`;
     });
 

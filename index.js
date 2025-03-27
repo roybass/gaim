@@ -29,7 +29,8 @@ io.on('connection', (socket) => {
     const { gameId, line } = data;
     if (games[gameId] && games[gameId].host === socket.id) {
       games[gameId].drawing.push(line);
-      socket.to(gameId).emit('draw', line);
+      io.to(gameId).emit('draw', line);
+      io.to(gameId).emit('updateDrawCount', games[gameId].drawing.length);
     }
   });
 
@@ -44,7 +45,8 @@ io.on('connection', (socket) => {
     const { gameId } = data;
     if (games[gameId] && games[gameId].host === socket.id) {
       games[gameId].drawing = [];
-      socket.to(gameId).emit('clearCanvas');
+      io.to(gameId).emit('clearCanvas');
+      io.to(gameId).emit('updateDrawCount', 0);
     }
   });
 });
